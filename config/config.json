@@ -1,0 +1,9 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "maulana",
+    "database": "cars_database",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
