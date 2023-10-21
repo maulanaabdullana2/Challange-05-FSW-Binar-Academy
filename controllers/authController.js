@@ -9,7 +9,9 @@ const register = async (req, res, next) => {
 
     if (password.length < 8) {
       next(new ApiError("Minimum password must be 8 characters", 400));
+      return; // Keluar dari fungsi jika terjadi kesalahan
     }
+
     const user = await Auth.findOne({
       where: {
         email,
@@ -18,25 +20,38 @@ const register = async (req, res, next) => {
 
     if (user) {
       next(new ApiError("User email already Use", 400));
+      return; // Keluar dari fungsi jika terjadi kesalahan
     }
 
     if (password !== confirmpassword) {
-      next(new ApiError("password does not match", 400));
+      next(new ApiError("Password does not match", 400));
+      return; // Keluar dari fungsi jika terjadi kesalahan
     }
 
     const hashPassword = byrcpt.hashSync(password, 10);
-    const hashconfirmassword = byrcpt.hashSync(confirmpassword, 10);
+    const hashConfirmPassword = byrcpt.hashSync(confirmpassword, 10);
 
-    const newuser = await User.create({
-      name,
-      age,
-      address,
-    });
+    let newuser;
+
+    if (req.user && req.user.role === "Super Admin") {
+      newuser = await User.create({
+        name,
+        address,
+        age,
+        role: "Admin",
+      });
+    } else {
+      newuser = await User.create({
+        name,
+        address,
+        age,
+      });
+    }
 
     const test = await Auth.create({
       email,
       password: hashPassword,
-      confirmpassword: hashconfirmassword,
+      confirmPassword: hashConfirmPassword,
       userId: newuser.id,
     });
 
@@ -46,11 +61,11 @@ const register = async (req, res, next) => {
         ...newuser,
         email,
         password: hashPassword,
-        confirmpassword: hashconfirmassword,
+        confirmPassword: hashConfirmPassword,
       },
     });
   } catch (error) {
-    next(new ApiError(error.message));
+    next(new ApiError(error.message, 400));
   }
 };
 
@@ -71,7 +86,7 @@ const login = async (req, res, next) => {
           role: user.User.role,
           email: user.email,
         },
-        process.env.JWT_SECRET || "12345"
+        process.env.JWT_SECRET
       );
       res.status(200).json({
         status: "suksess",

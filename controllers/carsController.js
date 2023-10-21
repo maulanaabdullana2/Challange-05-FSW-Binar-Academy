@@ -1,10 +1,12 @@
-const { Car } = require("../models");
+const { Car, User } = require("../models");
 const ApiError = require("../utils/apiError");
 const imagekit = require("../lib/imagekit");
 
 const findProducts = async (req, res, next) => {
   try {
-    const cars = await Car.findAll();
+    const cars = await Car.findAll({
+      include: ["User"],
+    });
 
     res.status(200).json({
       status: "Success",
@@ -29,11 +31,13 @@ const createCars = async (req, res, next) => {
       });
       images = img.url;
     }
+
     const cars = await Car.create({
       name,
       price,
       category,
       imageUrl: images,
+      userId: req.user.id,
     });
     res.status(200).json({
       status: "Success",
@@ -46,12 +50,13 @@ const createCars = async (req, res, next) => {
   }
 };
 
-const findcarsByID = async (req, res) => {
+const findcarsByID = async (req, res, next) => {
   try {
     const cars = await Car.findOne({
       where: {
         id: req.params.id,
       },
+      include: ["User"],
     });
     res.status(200).json({
       status: "sucess",
@@ -63,8 +68,7 @@ const findcarsByID = async (req, res) => {
     next(new ApiError(error.message, 400));
   }
 };
-
-const editcars = async (req, res) => {
+const editcars = async (req, res, next) => {
   try {
     const { name, price, category } = req.body;
     const exis = await Car.findOne({
@@ -73,9 +77,16 @@ const editcars = async (req, res) => {
       },
     });
 
-    let newimage = exis.image;
+    if (!exis) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "Mobil tidak ditemukan",
+      });
+    }
 
-    if (req.file) {
+    let newimage = exis.image;
+    const file = req.file;
+    if (file) {
       const img = await imagekit.upload({
         file: file.buffer,
         fileName: file.originalname,
@@ -88,6 +99,7 @@ const editcars = async (req, res) => {
         price,
         category,
         imageUrl: newimage,
+        userId: req.user.id,
       },
       {
         where: {
@@ -97,16 +109,40 @@ const editcars = async (req, res) => {
     );
 
     res.status(200).json({
-      status: "Suksess",
-      message: "Update Succesfully",
+      status: "Sukses",
+      message: "Update Berhasil",
     });
   } catch (error) {
     next(new ApiError(error.message, 400));
   }
 };
 
-const deletecars = async (req, res) => {
+const deletecars = async (req, res, next) => {
   try {
+    const car = await Car.findOne({
+      where: {
+        id: req.params.id,
+      },
+    });
+
+    if (!car) {
+      return res.status(404).json({
+        status: "Not Found",
+        message: "car not found",
+      });
+    }
+
+    await Car.update(
+      {
+        userId: req.user.id,
+      },
+      {
+        where: {
+          id: req.params.id,
+        },
+      }
+    );
+
     await Car.destroy({
       where: {
         id: req.params.id,
@@ -114,8 +150,8 @@ const deletecars = async (req, res) => {
     });
 
     res.status(200).json({
-      status: "Suksess",
-      message: "Delete Successfully",
+      status: "Success",
+      message: "Deleted Successfully",
     });
   } catch (error) {
     next(new ApiError(error.message, 400));

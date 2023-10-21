@@ -1,5 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+
 const ApiError = require("./utils/apiError");
 const errorHandler = require("./controllers/ErrorControllers");
 
@@ -8,6 +13,7 @@ const router = require("./routes");
 const PORT = process.env.PORT || 9000;
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Car.belongsTo(models.User, {
+        foreignKey: {
+          name: "userId",
+        },
+      });
     }
   }
   Car.init(
@@ -16,6 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       price: DataTypes.FLOAT,
       category: DataTypes.STRING,
+      userId: DataTypes.INTEGER,
+      isAvalible: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
       imageUrl: {
         type: DataTypes.TEXT,
         defaultValue:

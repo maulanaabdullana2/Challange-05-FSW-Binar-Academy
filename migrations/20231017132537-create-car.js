@@ -18,10 +18,17 @@ module.exports = {
       category: {
         type: Sequelize.STRING,
       },
+      userId: {
+        type: Sequelize.INTEGER,
+      },
       imageUrl: {
         type: Sequelize.TEXT,
         defaultValue:
           "https://www.salonlfc.com/wp-content/uploads/2018/01/image-not-found-1-scaled-1150x647.png",
+      },
+      isAvalible: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
       },
       createdAt: {
         allowNull: false,
